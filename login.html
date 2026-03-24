@@ -6,6 +6,8 @@
 const API = "https://tiny-bar-b958.lingorm.workers.dev";
 
 function login() {
+ localStorage.removeItem("admin");
+ localStorage.removeItem("pass");
  fetch(API + "/login", {
   method: "POST",
   headers: {
