@@ -47,8 +47,13 @@ button {
 const API = "https://tiny-bar-b958.lingorm.workers.dev";
 const AUTH = localStorage.getItem("admin");
 
+const PASS = localStorage.getItem("pass");
+
 fetch(API + "/admin/list", {
- headers: { auth: AUTH }
+  headers: {
+    auth: AUTH,
+    pass: PASS
+  }
 })
 .then(res => res.json())
 .then(data => {
@@ -82,7 +87,11 @@ fetch(API + "/admin/list", {
 function action(type, id) {
   fetch(API + "/admin/" + type, {
     method: "POST",
-    headers: { auth: AUTH },
+    headers: {
+  "Content-Type": "application/json",
+  auth: AUTH,
+  pass: localStorage.getItem("pass")
+},
     body: JSON.stringify({ id })
   }).then(() => location.reload());
 }
