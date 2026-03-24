@@ -48,7 +48,10 @@ const API = "https://tiny-bar-b958.lingorm.workers.dev";
 const AUTH = localStorage.getItem("admin");
 
 const PASS = localStorage.getItem("pass");
-
+if (!AUTH || !PASS) {
+  alert("请先登录");
+  location.href = "login.html";
+}
 fetch(API + "/admin/list", {
   headers: {
     auth: AUTH,
