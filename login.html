@@ -6,34 +6,27 @@
 const API = "https://tiny-bar-b958.lingorm.workers.dev";
 
 function login() {
- localStorage.removeItem("admin");
- localStorage.removeItem("pass");
- fetch(API + "/login", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-  user: document.getElementById("user").value,
-  pass: document.getElementById("pass").value
-})
-})
-.then(res => res.json())
-.then(data => {
-  if (data && data.user) {
+  const user = document.getElementById("user").value;
+  const pass = document.getElementById("pass").value;
 
-    // ✅存用户名
-    localStorage.setItem("admin", user);
+  fetch(API + "/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ user, pass })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data && data.user) {
 
-    // ✅存密码（关键）
-    localStorage.setItem("pass", pass);
+      localStorage.setItem("admin", user);
+      localStorage.setItem("pass", pass); // 👈 关键
 
-    // 跳转后台
-    location.href = "admin.html";
-
-  } else {
-    alert("登录失败");
-  }
-});
+      location.href = "admin.html";
+    } else {
+      alert("账号或密码错误");
+    }
+  });
 }
 </script>
