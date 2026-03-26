@@ -3,101 +3,254 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>后台</title>
+<title>Lingorm 后台</title>
 
 <style>
 body {
-  font-family: sans-serif;
-  background: #f5f6fa;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: #333;
 }
 
 .container {
-  max-width: 500px;
+  max-width: 900px;
   margin: auto;
   padding: 20px;
 }
 
-.item {
+h2 {
+  color: white;
+}
+
+.card {
   background: white;
-  padding: 15px;
+  padding: 12px;
   margin: 10px 0;
-  border-radius: 10px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 button {
-  margin-right: 10px;
-  padding: 6px 10px;
+  padding: 6px 12px;
+  margin: 5px;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
+  background: #667eea;
+  color: white;
 }
 
-.ok { background: #2ecc71; color: white; }
-.del { background: #e74c3c; color: white; }
+button.danger {
+  background: #ff4d4f;
+}
+
+input {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-  <h2>待审核列表</h2>
-  <div id="list"></div>
+
+<h2>📌 待审核</h2>
+<div id="pending"></div>
+
+<h2>✅ 已审核</h2>
+<div id="approved"></div>
+
+<div id="adminPanel">
+  <h2>👥 管理员管理</h2>
+
+  <div class="card">
+    <input id="newUser" placeholder="账号">
+    <input id="newPass" placeholder="密码">
+    <button onclick="addAdmin()">添加管理员</button>
+  </div>
+
+  <div class="card">
+    <button onclick="deleteSelected()" class="danger">批量删除</button>
+    <div id="admins"></div>
+  </div>
+</div>
+
+<h2>📊 点击统计</h2>
+<canvas id="chart"></canvas>
+
 </div>
 
 <script>
 const API = "https://tiny-bar-b958.lingorm.workers.dev";
+
 const AUTH = localStorage.getItem("admin");
-
 const PASS = localStorage.getItem("pass");
-if (!AUTH || !PASS) {
-  alert("请先登录");
-  location.href = "login.html";
+
+const isSuper = AUTH === "admin";
+
+if (!isSuper) {
+  document.getElementById("adminPanel").style.display = "none";
 }
-fetch(API + "/admin/list", {
-  headers: {
-    auth: AUTH,
-    pass: PASS
-  }
-})
-.then(res => res.json())
-.then(data => {
-  const list = document.getElementById("list");
 
-  data.forEach(i => {
-    const div = document.createElement("div");
-    div.className = "item";
+let selectedAdmins = [];
 
-    div.innerHTML = `
+// ===== 待审核 =====
+async function loadPending(){
+  const res = await fetch(API+"/admin/list",{headers:{auth:AUTH,pass:PASS}});
+  const data = await res.json();
+
+  const box = document.getElementById("pending");
+  box.innerHTML="";
+
+  data.forEach(i=>{
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
       <b>${i.title}</b><br>
-      <small>${i.url}</small><br><br>
+      <button onclick="action('approve','${i.id}')">通过</button>
+      <button class="danger" onclick="action('delete','${i.id}')">删除</button>
     `;
-
-    const ok = document.createElement("button");
-    ok.className = "ok";
-    ok.innerText = "通过";
-    ok.onclick = () => action("approve", i.id);
-
-    const del = document.createElement("button");
-    del.className = "del";
-    del.innerText = "删除";
-    del.onclick = () => action("delete", i.id);
-
-    div.appendChild(ok);
-    div.appendChild(del);
-    list.appendChild(div);
+    box.appendChild(div);
   });
-});
-
-function action(type, id) {
-  fetch(API + "/admin/" + type, {
-    method: "POST",
-    headers: {
-  "Content-Type": "application/json",
-  auth: AUTH,
-  pass: localStorage.getItem("pass")
-},
-    body: JSON.stringify({ id })
-  }).then(() => location.reload());
 }
+
+// ===== 已审核 =====
+async function loadApproved(){
+  const res = await fetch(API+"/admin/approved",{headers:{auth:AUTH,pass:PASS}});
+  const data = await res.json();
+
+  const box = document.getElementById("approved");
+  box.innerHTML="";
+
+  data.forEach(i=>{
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
+      <b>${i.title}</b> 🔥${i.click||0}
+      <br>
+      <button class="danger" onclick="action('delete','${i.id}')">删除</button>
+    `;
+    box.appendChild(div);
+  });
+}
+
+// ===== 操作 =====
+function action(type,id){
+  if(type==="delete" && !confirm("确定删除？")) return;
+
+  fetch(API+"/admin/"+type,{
+    method:"POST",
+    headers:{auth:AUTH,pass:PASS},
+    body:JSON.stringify({id})
+  }).then(()=>{
+    loadPending();
+    loadApproved();
+  });
+}
+
+// ===== 添加管理员 =====
+function addAdmin(){
+  fetch(API+"/admin/add",{
+    method:"POST",
+    headers:{auth:AUTH,pass:PASS},
+    body:JSON.stringify({
+      user:newUser.value,
+      pass:newPass.value
+    })
+  }).then(()=>{
+    alert("添加成功");
+    loadAdmins();
+  });
+}
+
+// ===== 管理员列表 =====
+async function loadAdmins(){
+  if(!isSuper) return;
+
+  const res = await fetch(API+"/admin/admins",{headers:{auth:AUTH,pass:PASS}});
+  const data = await res.json();
+
+  const box = document.getElementById("admins");
+  box.innerHTML="";
+
+  data.forEach(a=>{
+    const div=document.createElement("div");
+    div.className="card";
+
+    div.innerHTML=`
+      <input type="checkbox" onchange="toggleSelect('${a.user}',this)">
+      ${a.user}
+      <button class="danger" onclick="removeAdmin('${a.user}')">删除</button>
+    `;
+    box.appendChild(div);
+  });
+}
+
+// ===== 单个删除 =====
+function removeAdmin(user){
+  fetch(API+"/admin/remove",{
+    method:"POST",
+    headers:{auth:AUTH,pass:PASS},
+    body:JSON.stringify({user})
+  }).then(()=>loadAdmins());
+}
+
+// ===== 勾选 =====
+function toggleSelect(user,el){
+  if(el.checked){
+    selectedAdmins.push(user);
+  }else{
+    selectedAdmins=selectedAdmins.filter(u=>u!==user);
+  }
+}
+
+// ===== 批量删除 =====
+function deleteSelected(){
+  if(!confirm("批量删除管理员？")) return;
+
+  selectedAdmins.forEach(user=>{
+    fetch(API+"/admin/remove",{
+      method:"POST",
+      headers:{auth:AUTH,pass:PASS},
+      body:JSON.stringify({user})
+    });
+  });
+
+  selectedAdmins=[];
+  loadAdmins();
+}
+
+// ===== 图表 =====
+async function loadChart(){
+  const res = await fetch(API+"/list");
+  const data = await res.json();
+
+  new Chart(document.getElementById("chart"),{
+    type:"bar",
+    data:{
+      labels:data.map(i=>i.title),
+      datasets:[{
+        label:"点击量",
+        data:data.map(i=>i.click||0)
+      }]
+    }
+  });
+}
+
+// 引入图表
+const s=document.createElement("script");
+s.src="https://cdn.jsdelivr.net/npm/chart.js";
+s.onload=loadChart;
+document.body.appendChild(s);
+
+// 初始化
+loadPending();
+loadApproved();
+loadAdmins();
+
 </script>
 
 </body>
