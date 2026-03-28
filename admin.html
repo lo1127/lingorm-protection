@@ -58,6 +58,15 @@ input {
 <div class="container">
 
 <h2>📌 待审核</h2>
+<button onclick="logout()">退出登录</button>
+<select id="filter">
+  <option value="">全部</option>
+  <option value="weibo">微博</option>
+  <option value="ig">IG</option>
+  <option value="x">推特</option>
+  <option value="xhs">小红书</option>
+  <option value="douyin">抖音</option>
+</select>
 <div id="pending"></div>
 
 <h2>✅ 已审核</h2>
@@ -86,8 +95,12 @@ input {
 <script>
 const API = "https://tiny-bar-b958.lingorm.workers.dev";
 
-const AUTH = localStorage.getItem("admin");
-const PASS = localStorage.getItem("pass");
+const TOKEN = localStorage.getItem("token");
+
+if (!TOKEN) {
+  alert("请先登录");
+  location.href = "login.html";
+}
 
 const isSuper = AUTH === "admin";
 
@@ -99,7 +112,7 @@ let selectedAdmins = [];
 
 // ===== 待审核 =====
 async function loadPending(){
-  const res = await fetch(API+"/admin/list",{headers:{auth:AUTH,pass:PASS}});
+  const res = await fetch(API+"/admin/list",{headers:{token: TOKEN}});
   const data = await res.json();
 
   const box = document.getElementById("pending");
@@ -119,7 +132,7 @@ async function loadPending(){
 
 // ===== 已审核 =====
 async function loadApproved(){
-  const res = await fetch(API+"/admin/approved",{headers:{auth:AUTH,pass:PASS}});
+  const res = await fetch(API+"/admin/approved",{headers:{token: TOKEN}});
   const data = await res.json();
 
   const box = document.getElementById("approved");
@@ -143,7 +156,7 @@ function action(type,id){
 
   fetch(API+"/admin/"+type,{
     method:"POST",
-    headers:{auth:AUTH,pass:PASS},
+    headers:{token: TOKEN},
     body:JSON.stringify({id})
   }).then(()=>{
     loadPending();
@@ -155,7 +168,7 @@ function action(type,id){
 function addAdmin(){
   fetch(API+"/admin/add",{
     method:"POST",
-    headers:{auth:AUTH,pass:PASS},
+    headers:{token: TOKEN},
     body:JSON.stringify({
       user:newUser.value,
       pass:newPass.value
@@ -170,7 +183,7 @@ function addAdmin(){
 async function loadAdmins(){
   if(!isSuper) return;
 
-  const res = await fetch(API+"/admin/admins",{headers:{auth:AUTH,pass:PASS}});
+  const res = await fetch(API+"/admin/admins",{headers:{token: TOKEN}});
   const data = await res.json();
 
   const box = document.getElementById("admins");
@@ -193,7 +206,7 @@ async function loadAdmins(){
 function removeAdmin(user){
   fetch(API+"/admin/remove",{
     method:"POST",
-    headers:{auth:AUTH,pass:PASS},
+    headers:{token: TOKEN},
     body:JSON.stringify({user})
   }).then(()=>loadAdmins());
 }
@@ -214,7 +227,7 @@ function deleteSelected(){
   selectedAdmins.forEach(user=>{
     fetch(API+"/admin/remove",{
       method:"POST",
-      headers:{auth:AUTH,pass:PASS},
+      headers:{token: TOKEN},
       body:JSON.stringify({user})
     });
   });
@@ -250,6 +263,13 @@ document.body.appendChild(s);
 loadPending();
 loadApproved();
 loadAdmins();
+
+document.getElementById("filter").onchange = () => location.reload();
+
+function logout() {
+  localStorage.removeItem("token");
+  location.href = "login.html";
+}
 
 </script>
 
