@@ -109,9 +109,6 @@ const p = detectPlatform(urlInput.value);
 
 fetch(API + "/submit", {
   method: "POST",
-  headers: {
-    token: localStorage.getItem("token") || ""
-  },
   body: JSON.stringify({
     title: titleInput.value,
     url: normalizeUrl(urlInput.value),
