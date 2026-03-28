@@ -102,19 +102,22 @@ function submit() {
   btn.innerText = "提交中...";
   btn.disabled = true;
 
-  const p = detectPlatform(url.value);
+const urlInput = document.getElementById("url");
+const titleInput = document.getElementById("title");
 
-  fetch(API + "/submit", {
-    method: "POST",
-    headers: {
-  token: localStorage.getItem("token") || ""
-},
-    body: JSON.stringify({
-      title: title.value,
-      url: normalizeUrl(url.value),
-      platform: p
-    })
+const p = detectPlatform(urlInput.value);
+
+fetch(API + "/submit", {
+  method: "POST",
+  headers: {
+    token: localStorage.getItem("token") || ""
+  },
+  body: JSON.stringify({
+    title: titleInput.value,
+    url: normalizeUrl(urlInput.value),
+    platform: p
   })
+});
   .then(res => {
     if (!res.ok) throw new Error("duplicate");
     return res.text();
