@@ -1,13 +1,180 @@
-<input id="user" placeholder="账号">
-<input id="pass" placeholder="密码" type="password">
-<button onclick="login()">登录</button>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+
+<style>
+:root {
+  --bg: #f7f7f8;
+  --card: #ffffff;
+  --text: #1f1f1f;
+  --sub: #666;
+  --border: #e5e5e7;
+  --accent: #111;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f10;
+    --card: #1a1a1c;
+    --text: #f5f5f7;
+    --sub: #aaa;
+    --border: #2a2a2d;
+    --accent: #fff;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 卡片 */
+.card {
+  width: 90%;
+  max-width: 360px;
+  padding: 28px;
+  border-radius: 18px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 8px 24px rgba(0,0,0,0.06);
+
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 标题 */
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--sub);
+  margin-bottom: 20px;
+}
+
+/* 输入组 */
+.input-group {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.input-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+}
+
+/* 按钮 */
+button {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:active {
+  transform: scale(0.97);const token = request.headers.get("token");
+
+let tokens = await env.LINKS.get("tokens", "json") || [];
+
+const t = tokens.find(i => i.token === token && i.expire > Date.now());
+
+if (!t) return cors("unauthorized", 401);
+
+const admin = admins.find(a => a.user === t.user);
+}
+
+/* 状态提示 */
+.status {
+  margin-top: 12px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--sub);
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="title">管理员登录</div>
+  <div class="subtitle">仅管理员可访问</div>
+
+  <div class="input-group">
+    <input id="user" placeholder="账号">
+  </div>
+
+  <div class="input-group">
+    <input id="pass" type="password" placeholder="密码">
+  </div>
+
+  <button id="btn" onclick="login()">登录</button>
+
+  <div id="status" class="status"></div>
+</div>
 
 <script>
 const API = "https://tiny-bar-b958.lingorm.workers.dev";
 
+function setStatus(msg) {
+  document.getElementById("status").innerText = msg;
+}
+
 function login() {
-  const user = document.getElementById("user").value;
-  const pass = document.getElementById("pass").value;
+  const btn = document.getElementById("btn");
+  btn.innerText = "登录中...";
+  btn.disabled = true;
+
+  const user = document.getElementById("user").value.trim();
+  const pass = document.getElementById("pass").value.trim();
+
+  if (!user || !pass) {
+    setStatus("请输入账号和密码");
+    btn.innerText = "登录";
+    btn.disabled = false;
+    return;
+  }
 
   fetch(API + "/login", {
     method: "POST",
@@ -18,15 +185,38 @@ function login() {
   })
   .then(res => res.json())
   .then(data => {
-    if (data && data.user) {
+  if (data && data.token) {
 
-      localStorage.setItem("admin", user);
-      localStorage.setItem("pass", pass); // 👈 关键
+  localStorage.setItem("token", data.token);
 
-      location.href = "admin.html";
+  setStatus("登录成功");
+
+  setTimeout(() => {
+    location.href = "admin.html";
+  }, 400);
+
     } else {
-      alert("账号或密码错误");
+      setStatus("账号或密码错误");
+      btn.innerText = "重试";
+
+      setTimeout(() => {
+        btn.innerText = "登录";
+        btn.disabled = false;
+      }, 1000);
     }
+  })
+  .catch(() => {
+    setStatus("网络错误");
+    btn.innerText = "重试";
+    btn.disabled = false;
   });
 }
+
+/* 回车登录 */
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter") login();
+});
 </script>
+
+</body>
+</html>
