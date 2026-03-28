@@ -140,10 +140,9 @@ fetch(API + "/list")
 
     // 👇 点击统计 + 跳转
     div.onclick = () => {
-      fetch(API + "/click", {
-        method: "POST",
-        body: JSON.stringify({ id: i.id })
-      });
+      fetch(API + "/click?id=" + i.id, {
+  method: "POST"
+});
       window.open(i.url);
     };
 
