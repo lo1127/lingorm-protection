@@ -34,6 +34,25 @@ button {
   color: white;
   border: none;
 }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.toast.show {
+  opacity: 1;
+}
 </style>
 </head>
 
@@ -43,27 +62,81 @@ button {
   <h2>提交链接</h2>
   <input id="title" placeholder="标题">
   <input id="url" placeholder="链接">
-  <button onclick="submit()">提交</button>
+  <button id="btn" onclick="submit()">提交</button>
 </div>
 
 <script>
+
+function normalizeUrl(u) {
+  try {
+    const url = new URL(u);
+    url.search = ""; // 去参数
+    url.hash = "";   // 去 #
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return u;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+}
+
+function detectPlatform(url) {
+  if (url.includes("weibo.com")) return "weibo";
+  if (url.includes("instagram.com")) return "ig";
+  if (url.includes("x.com") || url.includes("twitter.com")) return "x";
+  if (url.includes("xiaohongshu.com")) return "xhs";
+  if (url.includes("douyin.com")) return "douyin";
+  return "other";
+}
+
 const API = "https://tiny-bar-b958.lingorm.workers.dev";
 
 function submit() {
+
+  const btn = document.getElementById("btn");
+  btn.innerText = "提交中...";
+  btn.disabled = true;
+
+  const p = detectPlatform(url.value);
+
   fetch(API + "/submit", {
     method: "POST",
+    headers: {
+  token: localStorage.getItem("token") || ""
+},
     body: JSON.stringify({
       title: title.value,
-      url: url.value,
-      platform: "other"
+      url: normalizeUrl(url.value),
+      platform: p
     })
-  }).then(() => {
-    alert("提交成功，等待审核");
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("duplicate");
+    return res.text();
+  })
+  .then(() => {
+    showToast("提交成功");
     title.value = "";
     url.value = "";
+  })
+  .catch(err => {
+    if (err.message === "duplicate") {
+      showToast("⚠️ 已提交过");
+    } else {
+      showToast("提交失败");
+    }
+  })
+  .finally(() => {
+    btn.innerText = "提交";
+    btn.disabled = false;
   });
 }
 </script>
-
+<div id="toast" class="toast"></div>
 </body>
 </html>
