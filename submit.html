@@ -6,138 +6,218 @@
 <title>投稿</title>
 
 <style>
-body {
-  font-family: sans-serif;
-  background: #f5f6fa;
-  text-align: center;
+*{box-sizing:border-box;}
+
+:root{
+  --bg1:#667eea;
+  --bg2:#764ba2;
+  --card:#ffffff;
+  --text:#1f1f1f;
+  --sub:#666;
+  --border:#e5e5e7;
 }
 
-.box {
-  margin: 50px auto;
-  width: 90%;
-  max-width: 400px;
-  background: white;
-  padding: 20px;
-  border-radius: 15px;
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
 }
 
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 10px;
-  border: 1px solid #ddd;
+/* 卡片 */
+.card{
+  width:90%;
+  max-width:380px;
+  background:var(--card);
+  border-radius:18px;
+  padding:22px 18px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.15);
+  animation:fade .4s ease;
 }
 
-button {
-  background: #667eea;
-  color: white;
-  border: none;
+@keyframes fade{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1}
 }
 
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-size: 14px;
-  opacity: 0;
-  transition: 0.3s;
+.title{
+  font-size:20px;
+  font-weight:600;
+  margin-bottom:6px;
 }
 
-.toast.show {
-  opacity: 1;
+.sub{
+  font-size:13px;
+  color:var(--sub);
+  margin-bottom:18px;
+}
+
+/* 输入 */
+.input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  margin-bottom:12px;
+  font-size:14px;
+  outline:none;
+  transition:border .2s, box-shadow .2s;
+}
+
+.input:focus{
+  border-color:#667eea;
+  box-shadow:0 0 0 2px rgba(102,126,234,0.15);
+}
+
+/* 平台提示 */
+.platform{
+  font-size:13px;
+  margin-bottom:12px;
+  color:var(--sub);
+}
+
+/* 按钮 */
+button{
+  width:100%;
+  padding:13px;
+  border:none;
+  border-radius:10px;
+  background:#111;
+  color:#fff;
+  font-size:14px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+button:active{
+  transform:scale(.97);
+}
+
+button.loading{
+  opacity:.7;
+}
+
+/* toast */
+.toast{
+  position:fixed;
+  bottom:30px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#000;
+  color:#fff;
+  padding:10px 16px;
+  border-radius:20px;
+  opacity:0;
+  transition:.3s;
+}
+
+.toast.show{
+  opacity:1;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>提交链接</h2>
-  <input id="title" placeholder="标题">
-  <input id="url" placeholder="链接">
+<div class="card">
+  <div class="title">📤 提交链接</div>
+  <div class="sub">支持微博 / IG / 推特 / 小红书 / 抖音</div>
+
+  <input id="title" class="input" placeholder="写点标题（可选）">
+  <input id="url" class="input" placeholder="粘贴链接">
+
+  <div id="platform" class="platform">平台：-</div>
+
   <button id="btn" onclick="submit()">提交</button>
 </div>
 
-<script>
+<div id="toast" class="toast"></div>
 
-function normalizeUrl(u) {
-  try {
-    const url = new URL(u);
-    url.search = ""; // 去参数
-    url.hash = "";   // 去 #
-    return url.toString().replace(/\/$/, "");
-  } catch {
+<script>
+const API = "https://tiny-bar-b958.lingorm.workers.dev";
+
+function detectPlatform(url){
+  if(url.includes("weibo.com")) return ["weibo","🔥 微博"];
+  if(url.includes("instagram.com")) return ["ig","📸 Instagram"];
+  if(url.includes("x.com")||url.includes("twitter.com")) return ["x","🐦 推特"];
+  if(url.includes("xiaohongshu.com")) return ["xhs","📕 小红书"];
+  if(url.includes("douyin.com")) return ["douyin","🎵 抖音"];
+  return ["other","🔗 未识别"];
+}
+
+function normalizeUrl(u){
+  try{
+    const url=new URL(u);
+    url.search="";
+    url.hash="";
+    return url.toString().replace(/\/$/,"");
+  }catch{
     return u;
   }
 }
 
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.innerText = msg;
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.innerText=msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2000);
+  setTimeout(()=>t.classList.remove("show"),2000);
 }
 
-function detectPlatform(url) {
-  if (url.includes("weibo.com")) return "weibo";
-  if (url.includes("instagram.com")) return "ig";
-  if (url.includes("x.com") || url.includes("twitter.com")) return "x";
-  if (url.includes("xiaohongshu.com")) return "xhs";
-  if (url.includes("douyin.com")) return "douyin";
-  return "other";
-}
-
-const API = "https://tiny-bar-b958.lingorm.workers.dev";
-
-function submit() {
-
-  const btn = document.getElementById("btn");
-  btn.innerText = "提交中...";
-  btn.disabled = true;
-
-const urlInput = document.getElementById("url");
-const titleInput = document.getElementById("title");
-
-const p = detectPlatform(urlInput.value);
-
-fetch(API + "/submit", {
-  method: "POST",
-  headers: {}
-  body: JSON.stringify({
-    title: titleInput.value,
-    url: normalizeUrl(urlInput.value),
-    platform: p
-  })
+document.getElementById("url").addEventListener("input",e=>{
+  const [_,name]=detectPlatform(e.target.value);
+  document.getElementById("platform").innerText="平台："+name;
 });
-  .then(res => {
-    if (!res.ok) throw new Error("duplicate");
+
+function submit(){
+  const btn=document.getElementById("btn");
+  const urlInput=document.getElementById("url");
+  const titleInput=document.getElementById("title");
+
+  if(!urlInput.value){
+    toast("请输入链接");
+    return;
+  }
+
+  btn.classList.add("loading");
+  btn.innerText="提交中...";
+
+  const [p]=detectPlatform(urlInput.value);
+
+  fetch(API+"/submit",{
+    method:"POST",
+    headers:{},
+    body:JSON.stringify({
+      title:titleInput.value||"未命名",
+      url:normalizeUrl(urlInput.value),
+      platform:p
+    })
+  })
+  .then(res=>{
+    if(!res.ok) throw new Error("duplicate");
     return res.text();
   })
-  .then(() => {
-    showToast("提交成功");
-    title.value = "";
-    url.value = "";
+  .then(()=>{
+    toast("提交成功 🎉");
+    titleInput.value="";
+    urlInput.value="";
+    document.getElementById("platform").innerText="平台：-";
   })
-  .catch(err => {
-    if (err.message === "duplicate") {
-      showToast("⚠️ 已提交过");
-    } else {
-      showToast("提交失败");
+  .catch(err=>{
+    if(err.message==="duplicate"){
+      toast("⚠️ 已提交过");
+    }else{
+      toast("提交失败");
     }
   })
-  .finally(() => {
-    btn.innerText = "提交";
-    btn.disabled = false;
+  .finally(()=>{
+    btn.classList.remove("loading");
+    btn.innerText="提交";
   });
 }
 </script>
-<div id="toast" class="toast"></div>
+
 </body>
 </html>
