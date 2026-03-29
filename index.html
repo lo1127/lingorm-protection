@@ -46,35 +46,37 @@ a {
 
 /* 目录按钮 */
 .menu-btn {
-  position: fixed;
-  top: 15px;
-  right: 15px;
+  position: absolute; /* 👈 改成 absolute */
+  top: 10px;          /* 👈 往下移（你可以微调 60~90px） */
+  right: 10px;        /* 👈 贴右一点 */
   font-size: 22px;
   background: rgba(255,255,255,0.2);
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
   cursor: pointer;
+  z-index: 10;        /* 👈 防止被遮挡 */
 }
 
 /* 抽屉 */
 .drawer {
-  position: fixed;
-  right: 0;
-  top: 0;
-  width: 200px; /* 👈 同时缩小 */
-  height: 100%;
+  position: absolute;   /* 👈 改这里 */
+  right: 10px;          /* 👈 对齐按钮 */
+  top: 55px;           /* 👈 在按钮下面 */
+  width: 200px;
 
   background: #111;
 
-  transform: translateX(110%); /* 👈 多推一点 */
+  transform: translateY(-20px); /* 👈 改动画方向 */
   opacity: 0;
   pointer-events: none;
 
   transition: 0.25s ease;
+  border-radius: 12px;  /* 👈 更像卡片 */
+  z-index: 9;           /* 👈 在按钮下面，在卡片上面 */
 }
 
 .drawer.open {
-  transform: translateX(0);
+  transform: translateY(0);
   opacity: 1;
   pointer-events: auto;
 }
@@ -98,7 +100,8 @@ a {
 
   <hr>
 
-  <div>🔗 链接分类</div>
+  <div style="opacity:.6;font-size:14px;margin-top:10px;">🔗链接分类</div>
+<a href="index.html">全部</a>
   <a href="?p=weibo">微博</a>
   <a href="?p=ig">IG</a>
   <a href="?p=x">推特</a>
@@ -119,7 +122,7 @@ const icons = {
   x: "🐦",
   douyin: "🎵",
   xhs: "📕",
-  weibo: "🔥",
+  weibo: "🧣",
   other: "🔗"
 };
 
