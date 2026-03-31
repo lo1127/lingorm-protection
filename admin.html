@@ -30,6 +30,16 @@ h2 {
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
+/* 已查看卡片 */
+.card.viewed {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+}
+
+/* 已查看链接 */
+.link-viewed {
+  color: #aaa !important;
+}
 
 button {
   padding: 6px 12px;
@@ -50,6 +60,17 @@ input {
   border-radius: 6px;
   border: 1px solid #ddd;
 }
+
+a {
+  color:#667eea;
+  text-decoration:none;
+  font-size:13px;
+}
+
+a:hover{
+  text-decoration:underline;
+}
+
 </style>
 </head>
 
@@ -95,6 +116,29 @@ input {
 <script>
 const API = "https://tiny-bar-b958.lingorm.workers.dev";
 
+// ===== 已查看记录 =====
+let viewed = JSON.parse(localStorage.getItem("viewed_ids") || "[]");
+
+function markViewed(id){
+  if(!viewed.includes(id)){
+    viewed.push(id);
+    localStorage.setItem("viewed_ids", JSON.stringify(viewed));
+  }
+}
+
+function isViewed(id){
+  return viewed.includes(id);
+}
+
+// ===== 排序（未看优先）=====
+function sortByViewed(list){
+  return list.sort((a,b)=>{
+    const av = isViewed(a.id) ? 1 : 0;
+    const bv = isViewed(b.id) ? 1 : 0;
+    return av - bv; // 未看(0)在前，已看(1)在后
+  });
+}
+
 const TOKEN = localStorage.getItem("token");
 let currentFilter = "";
 if (!TOKEN) {
@@ -118,17 +162,27 @@ let list = data;
 if (currentFilter) {
   list = data.filter(i => i.platform === currentFilter);
 }
+list = sortByViewed(list);
   const box = document.getElementById("pending");
   box.innerHTML="";
 
   list.forEach(i=>{
     const div=document.createElement("div");
+div.setAttribute("data-id", i.id);
     div.className="card";
+if(isViewed(i.id)){
+  div.classList.add("viewed");
+}
     div.innerHTML=`
-      <b>${i.title}</b><br>
-      <button onclick="action('approve','${i.id}')">通过</button>
-      <button class="danger" onclick="action('delete','${i.id}')">删除</button>
-    `;
+  <b>${i.title}</b><br>
+
+  <a href="${i.url}" target="_blank" class="${isViewed(i.id) ? 'link-viewed' : ''}" onclick="event.stopPropagation(); trackClick('${i.id}')">
+    🔗 点击查看
+  </a><br>
+
+  <button onclick="action('approve','${i.id}')">通过</button>
+  <button class="danger" onclick="action('delete','${i.id}')">删除</button>
+`;
     box.appendChild(div);
   });
 }
@@ -141,17 +195,26 @@ let list = data;
 if (currentFilter) {
   list = data.filter(i => i.platform === currentFilter);
 }
+list = sortByViewed(list);
   const box = document.getElementById("approved");
   box.innerHTML="";
 
   list.forEach(i=>{
     const div=document.createElement("div");
+div.setAttribute("data-id", i.id);
     div.className="card";
+if(isViewed(i.id)){
+  div.classList.add("viewed");
+}
     div.innerHTML=`
-      <b>${i.title}</b> 🔥${i.click||0}
-      <br>
-      <button class="danger" onclick="action('delete','${i.id}')">删除</button>
-    `;
+  <b>${i.title}</b> 🔥${i.click||0}<br>
+
+  <a href="${i.url}" target="_blank" class="${isViewed(i.id) ? 'link-viewed' : ''}" onclick="event.stopPropagation(); trackClick('${i.id}')">
+    🔗 查看内容
+  </a><br>
+
+  <button class="danger" onclick="action('delete','${i.id}')">删除</button>
+`;
     box.appendChild(div);
   });
 }
@@ -279,6 +342,36 @@ document.getElementById("filter").onchange = (e) => {
 function logout() {
   localStorage.removeItem("token");
   location.href = "login.html";
+}
+
+function trackClick(id){
+  markViewed(id); // ✅ 标记已看
+// 👇 实时变灰（不刷新）
+  // ✅ 精确匹配卡片
+  const card = document.querySelector(`.card[data-id="${id}"]`);
+  if(card){
+    card.classList.add("viewed");
+
+    const link = card.querySelector("a");
+    if(link){
+      link.classList.add("link-viewed");
+    }
+  }
+
+  fetch(API + "/click?id=" + id, {
+    method: "POST"
+  });
+ // 👇 关键：重新排序
+  setTimeout(()=>{
+    loadPending();
+    loadApproved();
+  }, 100);
+}
+
+function trackClick(id){
+  setTimeout(()=>{
+    fetch(API + "/click?id=" + id);
+  }, 300);
 }
 
 </script>
