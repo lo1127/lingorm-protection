@@ -6,73 +6,85 @@
 <title>LingOrm反黑链接</title>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   color: white;
-  text-align: center;
+  min-height: 100vh;
 }
 
 .container {
-  max-width: 500px;
+  max-width: 1400px;
   margin: auto;
   padding: 20px;
 }
 
-h1 {
-  margin: 20px 0;
+/* 头部区域 */
+.header {
+  text-align: center;
+  padding: 30px 0 20px;
 }
 
-.card {
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
-  padding: 15px;
-  margin: 10px 0;
-  border-radius: 15px;
-  transition: 0.2s;
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 2px;
 }
 
-.card:hover {
-  transform: scale(1.03);
-}
-
-a {
-  color: white;
-  text-decoration: none;
-  font-size: 16px;
-  display: block;
+.header p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  opacity: 0.6;
 }
 
 /* 目录按钮 */
 .menu-btn {
-  position: absolute; /* 👈 改成 absolute */
-  top: 10px;          /* 👈 往下移（你可以微调 60~90px） */
-  right: 10px;        /* 👈 贴右一点 */
-  font-size: 22px;
-  background: rgba(255,255,255,0.2);
-  padding: 6px 8px;
-  border-radius: 8px;
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  font-size: 20px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  padding: 10px 12px;
+  border-radius: 12px;
   cursor: pointer;
-  z-index: 10;        /* 👈 防止被遮挡 */
+  z-index: 100;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
+}
+
+.menu-btn:hover {
+  background: rgba(255,255,255,0.2);
+  transform: scale(1.05);
 }
 
 /* 抽屉 */
 .drawer {
-  position: absolute;   /* 👈 改这里 */
-  right: 10px;          /* 👈 对齐按钮 */
-  top: 55px;           /* 👈 在按钮下面 */
-  width: 200px;
-
-  background: #111;
-
-  transform: translateY(-20px); /* 👈 改动画方向 */
+  position: fixed;
+  right: 15px;
+  top: 65px;
+  width: 180px;
+  background: rgba(20, 20, 40, 0.95);
+  backdrop-filter: blur(20px);
+  transform: translateY(-15px);
   opacity: 0;
   pointer-events: none;
-
-  transition: 0.25s ease;
-  border-radius: 12px;  /* 👈 更像卡片 */
-  z-index: 9;           /* 👈 在按钮下面，在卡片上面 */
+  transition: 0.3s ease;
+  border-radius: 16px;
+  z-index: 99;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 15px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
 
 .drawer.open {
@@ -82,11 +94,283 @@ a {
 }
 
 .drawer a {
-  display: block;
-  margin: 15px 0;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 4px 0;
+  font-size: 13px;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.2s;
 }
 
+.drawer a:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.drawer hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin: 12px 0;
+}
+
+.drawer .section-title {
+  opacity: 0.5;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 10px 12px 5px;
+}
+
+/* 卡片网格 - 5列 */
+#list {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  #list { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 900px) {
+  #list { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  #list { grid-template-columns: repeat(2, 1fr); }
+  .container { padding: 15px; }
+}
+
+/* 卡片样式 - 更小更精致 */
+.card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--platform-color, #667eea), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.15);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+/* 卡片图标 */
+.card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, var(--platform-color, #667eea), var(--platform-color-end, #764ba2));
+}
+
+/* 平台颜色 */
+.card[data-platform="weibo"] { --platform-color: #e6162d; --platform-color-end: #ff4757; }
+.card[data-platform="ig"] { --platform-color: #E1306C; --platform-color-end: #F77737; }
+.card[data-platform="x"] { --platform-color: #1DA1F2; --platform-color-end: #0d8ecf; }
+.card[data-platform="xhs"] { --platform-color: #fe2c55; --platform-color-end: #ff6b81; }
+.card[data-platform="douyin"] { --platform-color: #25f4ee; --platform-color-end: #fe2c55; }
+.card[data-platform="other"] { --platform-color: #667eea; --platform-color-end: #764ba2; }
+
+/* 卡片标题 */
+.card-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 卡片底部信息 */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.card-clicks {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.card-platform {
+  background: rgba(255,255,255,0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+/* 加载状态 */
+.loading {
+  text-align: center;
+  padding: 40px;
+  opacity: 0.6;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  opacity: 0.6;
+}
+
+.empty-state-icon {
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+/* 统计栏 */
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  padding: 15px 0 20px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #667eea;
+}
+
+/* 排序栏 */
+.sort-bar {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding-bottom: 20px;
+}
+
+.sort-btn {
+  padding: 8px 16px;
+  font-size: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sort-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+.sort-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-color: transparent;
+  color: white;
+}
+
+/* 卡片时间 */
+.card-time {
+  font-size: 10px;
+  opacity: 0.5;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 卡片底部改为两行 */
+.card-meta {
+  margin-top: auto;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+/* 新增标签 */
+.card-new {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #fe2c55, #ff6b81);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* 热门标签 */
+.card-hot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #ff9500, #ff5e3a);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+}
 </style>
 </head>
 
@@ -95,23 +379,54 @@ a {
 <div class="menu-btn" onclick="toggleMenu()">☰</div>
 
 <div id="drawer" class="drawer">
- 
-  <a href="/submit.html">📤 投稿</a>
-
+  <a href="/submit.html">📤 投稿链接</a>
+  
   <hr>
-
-  <div style="opacity:.6;font-size:14px;margin-top:10px;">🔗链接分类</div>
-<a href="index.html">全部</a>
-  <a href="?p=weibo">微博</a>
-  <a href="?p=ig">IG</a>
-  <a href="?p=x">推特</a>
-  <a href="?p=xhs">小红书</a>
-  <a href="?p=douyin">抖音</a>
+  
+  <div class="section-title">链接分类</div>
+  <a href="index.html">🔗 全部</a>
+  <a href="?p=weibo">🧣 微博</a>
+  <a href="?p=ig">📸 IG</a>
+  <a href="?p=x">🐦 推特</a>
+  <a href="?p=xhs">📕 小红书</a>
+  <a href="?p=douyin">🎵 抖音</a>
 </div>
 
 <div class="container">
-  <h1>LingOrm反黑链接</h1>
-  <div id="list"></div>
+  <div class="header">
+    <h1>LingOrm反黑链接</h1>
+    <p>守护粉丝社区，一键举报反黑</p>
+  </div>
+  
+  <div class="stats-bar" id="stats">
+    <div class="stat-item">
+      <span>链接总数</span>
+      <span class="stat-value" id="total-count">-</span>
+    </div>
+    <div class="stat-item">
+      <span>总点击</span>
+      <span class="stat-value" id="total-clicks">-</span>
+    </div>
+  </div>
+  
+  <div class="sort-bar">
+    <button class="sort-btn active" data-sort="hot" onclick="sortBy('hot')">
+      <span>🔥</span> 热度优先
+    </button>
+    <button class="sort-btn" data-sort="new" onclick="sortBy('new')">
+      <span>🕐</span> 最新发布
+    </button>
+    <button class="sort-btn" data-sort="old" onclick="sortBy('old')">
+      <span>📅</span> 最早发布
+    </button>
+  </div>
+  
+  <div id="list">
+    <div class="loading" style="grid-column: 1/-1;">
+      <div class="loading-spinner"></div>
+      <div>加载中...</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -126,37 +441,168 @@ const icons = {
   other: "🔗"
 };
 
+const platformNames = {
+  ig: "IG",
+  x: "X",
+  douyin: "抖音",
+  xhs: "小红书",
+  weibo: "微博",
+  other: "其他"
+};
+
 const urlParams = new URLSearchParams(location.search);
 const p = urlParams.get("p");
 
-fetch(API + "/list")
-.then(res => res.json())
-.then(data => {
+let allData = [];
+let currentSort = "hot";
 
-  if (p) {
-    data = data.filter(i => i.platform === p);
+// 格式化时间显示
+function formatTime(timestamp) {
+  if (!timestamp) return "未知时间";
+  
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now - date;
+  
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  
+  if (minutes < 1) return "刚刚";
+  if (minutes < 60) return `${minutes}分钟前`;
+  if (hours < 24) return `${hours}小时前`;
+  if (days < 7) return `${days}天前`;
+  if (days < 30) return `${Math.floor(days / 7)}周前`;
+  if (days < 365) return `${Math.floor(days / 30)}个月前`;
+  return `${Math.floor(days / 365)}年前`;
+}
+
+// 判断是否为新链接（24小时内）
+function isNew(timestamp) {
+  if (!timestamp) return false;
+  const diff = Date.now() - new Date(timestamp).getTime();
+  return diff < 86400000; // 24小时
+}
+
+// 判断是否为热门（点击数前10%）
+function isHot(click, allClicks) {
+  if (!click || allClicks.length === 0) return false;
+  const sorted = [...allClicks].sort((a, b) => b - a);
+  const threshold = sorted[Math.floor(sorted.length * 0.1)] || sorted[0];
+  return click >= threshold && click > 10;
+}
+
+// 排序函数
+function sortData(data, sortType) {
+  const sorted = [...data];
+  switch(sortType) {
+    case "hot":
+      sorted.sort((a, b) => (b.click || 0) - (a.click || 0));
+      break;
+    case "new":
+      sorted.sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeB - timeA;
+      });
+      break;
+    case "old":
+      sorted.sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeA - timeB;
+      });
+      break;
   }
-  const list = document.getElementById("list");
+  return sorted;
+}
 
+// 渲染列表
+function renderList(data) {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  
+  if (data.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1;">
+        <div class="empty-state-icon">📭</div>
+        <div>暂无链接</div>
+      </div>
+    `;
+    return;
+  }
+  
+  const allClicks = data.map(i => i.click || 0);
+  
   data.forEach(i => {
     const div = document.createElement("div");
     div.className = "card";
+    div.setAttribute("data-platform", i.platform || "other");
+    
+    // 判断标签
+    let badge = "";
+    if (isNew(i.createdAt)) {
+      badge = `<span class="card-new">NEW</span>`;
+    } else if (isHot(i.click, allClicks)) {
+      badge = `<span class="card-hot">HOT</span>`;
+    }
 
     div.innerHTML = `
-      <div>${icons[i.platform] || "🔗"} ${i.title}</div>
-      <small>🔥 ${i.click || 0}</small>
+      ${badge}
+      <div class="card-icon">${icons[i.platform] || "🔗"}</div>
+      <div class="card-title">${i.title}</div>
+      <div class="card-meta">
+        <div class="card-footer">
+          <span class="card-clicks">🔥 ${i.click || 0}</span>
+          <span class="card-platform">${platformNames[i.platform] || "其他"}</span>
+        </div>
+        <div class="card-time">
+          <span>🕐</span> ${formatTime(i.createdAt)}
+        </div>
+      </div>
     `;
 
-    // 👇 点击统计 + 跳转
     div.onclick = () => {
-      fetch(API + "/click?id=" + i.id, {
-  method: "POST"
-});
+      fetch(API + "/click?id=" + i.id, { method: "POST" });
       window.open(i.url);
     };
 
     list.appendChild(div);
   });
+}
+
+// 排序切换
+function sortBy(sortType) {
+  currentSort = sortType;
+  
+  // 更新按钮状态
+  document.querySelectorAll(".sort-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.sort === sortType);
+  });
+  
+  // 筛选并排序
+  let data = p ? allData.filter(i => i.platform === p) : allData;
+  data = sortData(data, sortType);
+  renderList(data);
+}
+
+// 初始加载
+fetch(API + "/list")
+.then(res => res.json())
+.then(data => {
+  allData = data;
+  
+  // 统计
+  const totalClicks = data.reduce((sum, i) => sum + (i.click || 0), 0);
+  document.getElementById("total-count").textContent = data.length;
+  document.getElementById("total-clicks").textContent = totalClicks;
+
+  // 筛选
+  let filtered = p ? data.filter(i => i.platform === p) : data;
+  
+  // 默认按热度排序
+  filtered = sortData(filtered, currentSort);
+  renderList(filtered);
 });
 
 function toggleMenu() {
@@ -170,7 +616,6 @@ document.addEventListener("click", e => {
     d.classList.remove("open");
   }
 });
-
 </script>
 
 </body>
